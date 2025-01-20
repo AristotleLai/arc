@@ -3,13 +3,26 @@
 version: "3"
 
 tasks:
-  build-img:
+  build-ext:
     cmds:
+      - git reset --hard
       - git pull
-      - ./img-gen.sh
+      - ./img-gen.sh ext
+
+  build-min:
+    cmds:
+      - git reset --hard
+      - git pull
+      - ./img-gen.sh min
+
+  build-micro:
+    cmds:
+      - git reset --hard
+      - git pull
+      - ./img-gen.sh micro
 
   compile-kpatch:
     dir: kpatch
     cmds:
       - make clean all
-      - mv kpatch ../files/board/arc/overlayfs/opt/arc/
+      - mv kpatch ../files/p3/system/

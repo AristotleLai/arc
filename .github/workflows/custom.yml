@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 AuxXxilium <https://github.com/AuxXxilium> and Ing <https://github.com/wjz304>
+# Copyright (C) 2023 AuxXxilium <https://github.com/AuxXxilium>
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
@@ -39,26 +39,26 @@ jobs:
           MODEL = ''
           PRODUCTVER = ''
           ADDONS = ''
-          MACSYS = ''
-          CUSTOMKERNEL = ''
+          KERNEL = ''
           FORMAT = ''
+          BRANCH = ''
           try:
               jsonbody = json.loads(issuebody)
               MODEL = jsonbody.get('model', '')
               PRODUCTVER = jsonbody.get('version', '')
               ADDONS = jsonbody.get('addons', '')
-              MACSYS = jsonbody.get('macsys', '')
-              CUSTOMKERNEL = jsonbody.get('customkernel', '')
+              KERNEL = jsonbody.get('kernel', '')
               FORMAT = jsonbody.get('format', '')
+              BRANCH = jsonbody.get('branch', '')
           except ValueError as e:
               pass
 
           set_output("MODEL", MODEL)
           set_output("PRODUCTVER", PRODUCTVER)
           set_output("ADDONS", ADDONS)
-          set_output("MACSYS", MACSYS)
-          set_output("CUSTOMKERNEL", CUSTOMKERNEL)
+          set_output("KERNEL", KERNEL)
           set_output("FORMAT", FORMAT)
+          set_output("BRANCH", BRANCH)
 
       # calculates the version number and push
       - name: Calculate Version
@@ -78,7 +78,7 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           body: |
             Hi @${{ github.event.issue.user.login }}.  
-            arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }} is being build, it will be uploaded here and sent to your email later..  
+            building arc-${{ env.MODEL }}-${{ env.VERSION }}, it will be uploaded here and sent to your email later..  
             > ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}  
             ----
 
@@ -86,7 +86,8 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -y jq gawk cpio gettext libelf-dev qemu-utils busybox dialog curl sed 
+          sudo apt install -y jq gawk cpio gettext libelf-dev qemu-utils busybox dialog curl sed
+          sudo pip install -r scripts/requirements.txt
           sudo snap install yq
 
       # Build incremental
@@ -99,7 +100,7 @@ jobs:
           }
 
           TAG="$(curl -m 5 -kL https://api.github.com/repos/AuxXxilium/arc/releases/latest | grep "tag_name" | awk '{print substr($2, 2, length($2)-3)}')"
-          curl -kL "https://github.com/AuxXxilium/arc/releases/download/${TAG}/arc-${TAG}.img.zip" -o "/tmp/arc.img.zip"
+          curl -kL "https://github.com/AuxXxilium/arc/releases/download/${TAG}/arc-${TAG}-${{ env.BRANCH }}.img.zip" -o "/tmp/arc.img.zip"
           unzip -o "/tmp/arc.img.zip" -d "/tmp"
 
           echo "Modify Arc Image"
@@ -118,25 +119,35 @@ jobs:
           echo "Set Custom Config"
           PRESET_CONFIG_FILE="/tmp/p1/user-config.yml"
           sudo touch "${PRESET_CONFIG_FILE}"
-          writeConfigKey "model" "${{ env.MODEL }}" "${PRESET_CONFIG_FILE}"
-          writeConfigKey "productver" "${{ env.PRODUCTVER }}" "${PRESET_CONFIG_FILE}"
-          writeConfigKey "arc" "{}" "${PRESET_CONFIG_FILE}"
-          writeConfigKey "arc.macsys" "${{ env.MACSYS }}" "${PRESET_CONFIG_FILE}"
-          writeConfigKey "arc.custom" "true" "${PRESET_CONFIG_FILE}"
+          MODEL="${{ env.MODEL }}"
+          writeConfigKey "model" "${MODEL}" "${PRESET_CONFIG_FILE}"
+          PRODUCTVER="${{ env.PRODUCTVER }}"
+          PJ="$(python scripts/functions.py getpats4mv -m "${MODEL}" -v "${PRODUCTVER:0:3}")"
+          PAT_URL=$(echo "${PJ}" | jq -r ".\"${PRODUCTVER}\".url")
+          PAT_HASH=$(echo "${PJ}" | jq -r ".\"${PRODUCTVER}\".sum")
+          writeConfigKey "productver" "${PRODUCTVER:0:3}" "${PRESET_CONFIG_FILE}"
+          writeConfigKey "paturl" "${PAT_URL}" "${PRESET_CONFIG_FILE}"
+          writeConfigKey "pathash" "${PAT_HASH}" "${PRESET_CONFIG_FILE}"
           if [ "${{ env.MODEL }}" = "SA6400" ]; then
-            writeConfigKey "arc.kernel" "${{ env.KERNEL }}" "${PRESET_CONFIG_FILE}"
+            writeConfigKey "kernel" "${{ env.KERNEL }}" "${PRESET_CONFIG_FILE}"
           fi
           writeConfigKey "addons" "{}" "${PRESET_CONFIG_FILE}"
           if [ -n "${{ env.ADDONS }}" ]; then
-            writeConfigKey "addons" "{}" "${PRESET_CONFIG_FILE}"
             for A in $(echo "${{ env.ADDONS }}" | tr ',' ' ' | sed 's/\[//g' | sed 's/\]//g'); do
               VALUE=""
               writeConfigKey "addons.\"${A}\"" "${VALUE}" "${PRESET_CONFIG_FILE}"
             done
           fi
+          writeConfigKey "automated" "true" "${PRESET_CONFIG_FILE}"
           echo "$(cat "${PRESET_CONFIG_FILE}")"
-          echo "arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }}" >"/tmp/automated"
-          sudo cp -f "/tmp/automated" "/tmp/p3/automated"
+          sudo echo "arc-${MODEL}-${PRODUCTVER:0:3}-${TAG}" >"/tmp/automated"
+          sudo mv -f "/tmp/automated" "/tmp/p3/automated"
+          DSM_FILE="${PAT_HASH}.tar"
+          DSM_URL="https://raw.githubusercontent.com/AuxXxilium/arc-dsm/main/files/${MODEL/+/%2B}/${PRODUCTVER:0:3}/${PAT_HASH}.tar"
+          sudo curl -skL "${DSM_URL}" -o "/tmp/${DSM_FILE}"
+          [ -f "/tmp/${DSM_FILE}" ] && echo "dsm: download successful" || exit 1
+          sudo mkdir -p "/tmp/p3/users"
+          sudo mv -f "/tmp/${DSM_FILE}" "/tmp/p3/users/${DSM_FILE}"
           echo "Syncing files"
           sync
 
@@ -150,44 +161,41 @@ jobs:
 
           cp -f "${IMAGE_FILE}" "arc.img"
 
-          if [ "${{ env.FORMAT }}" = "dyn" ]; then
+      # Zip image and generate checksum
+      - name: Convert & Pack
+        run: |
+          rm -rf arc-*.zip 2>/dev/null
+          if [ "${{ env.FORMAT }}" = "img" ]; then
+            zip -9 "arc-${{ env.MODEL }}-${{ env.VERSION }}.img.zip" arc.img
+          elif [ "${{ env.FORMAT }}" = "dyn" ]; then
             echo "Image Converter -> dyn"
-            qemu-img convert -O vmdk arc.img arc-dyn.vmdk
+            qemu-img convert arc.img -O vmdk -o adapter_type=lsilogic,compat6 arc-dyn.vmdk
+            zip -9 "arc-${{ env.MODEL }}-${{ env.VERSION }}.vmdk-dyn.zip" arc-dyn.vmdk
           elif [ "${{ env.FORMAT }}" = "flat" ]; then
             echo "Image Converter -> flat"
-            qemu-img convert -O vmdk -o adapter_type=lsilogic arc.img -o subformat=monolithicFlat arc.vmdk
-          fi
-
-      # Zip image and generate checksum
-      - name: Pack
-        run: |
-          if [ "${{ env.FORMAT }}" = "img" ]; then
-            zip -9 "arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }}.img.zip" arc.img
-            UPLOAD="$(curl -k -F "file=@arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }}.img.zip" "https://file.io")"
-            if ! echo "${UPLOAD}" | grep -oP '"link":\s*"\K[^"]+'; then
-              echo "Upload failed"
-              exit 1
-            fi
-          elif [ "${{ env.FORMAT }}" = "dyn" ]; then
-            zip -9 "arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }}.vmdk-dyn.zip" arc-dyn.vmdk
-            UPLOAD="$(curl -k -F "file=@arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }}.vmdk-dyn.zip" "https://file.io")"
-            if ! echo "${UPLOAD}" | grep -oP '"link":\s*"\K[^"]+'; then
-              echo "Upload failed"
-              exit 1
-            fi
-          elif [ "${{ env.FORMAT }}" = "flat" ]; then
-            zip -9 "arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }}.vmdk-flat.zip" arc.vmdk arc-flat.vmdk
-            UPLOAD="$(curl -k -F "file=@arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }}.vmdk-flat.zip" "https://file.io")"
-            if ! echo "${UPLOAD}" | grep -oP '"link":\s*"\K[^"]+'; then
-              echo "Upload failed"
-              exit 1
-            fi
+            qemu-img convert arc.img -O vmdk -o adapter_type=lsilogic,subformat=monolithicFlat,compat6 arc.vmdk
+            zip -9 "arc-${{ env.MODEL }}-${{ env.VERSION }}.vmdk-flat.zip" arc.vmdk arc-flat.vmdk
+          elif [ "${{ env.FORMAT }}" = "vhdx" ]; then
+            echo "Image Converter -> vhdx"
+            qemu-img convert arc.img -O vhdx -o subformat=dynamic arc.vhdx
+            zip -9 "arc-${{ env.MODEL }}-${{ env.VERSION }}.vhdx.zip" arc.vhdx
+          elif [ "${{ env.FORMAT }}" = "ova" ]; then
+            echo "Image Converter -> ova"
+            convertova "arc.img" "arc.ova"
+            zip -9 "arc-${{ env.MODEL }}-${{ env.VERSION }}.ova.zip" arc.ova
           fi
 
           EMAIL=$(curl -s -H "Authorization: token ${{ secrets.ACTION }}" "https://api.github.com/users/${{ github.event.issue.user.login }}" | jq -r '.email')
-          FIOURL="$(echo "${UPLOAD}" | grep -oP '"link":\s*"\K[^"]+')"
           echo "EMAIL=${EMAIL}" >> $GITHUB_ENV
-          echo "FIOURL=${FIOURL}" >> $GITHUB_ENV
+
+      # Upload artifact
+      - name: Upload to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-${{ env.MODEL }}-${{ env.VERSION }}-${{ github.run_id }}
+          path: |
+            arc-*.zip
+          retention-days: 1
 
       - name: Send mail
         if: success() && env.EMAIL != 'null'
@@ -197,11 +205,16 @@ jobs:
           server_port: 587
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: arc-${{ env.model }}-${{ env.PRODUCTVER }}-${{ env.VERSION }}
+          subject: arc-${{ env.model }}-${{ env.VERSION }}
           to: ${{ env.EMAIL }}
           from: ${{ secrets.MAIL_USERNAME }}
           body: |
-            ${{ env.FIOURL }}
+            Hi @${{ github.event.issue.user.login }}.  
+            arc-${{ env.MODEL }}-${{ env.VERSION }} is ready to download:
+            > ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            If this isn't working, do not use customized Versions!
+            ----
 
       - name: Update Comment Success
         if: success()
@@ -213,17 +226,11 @@ jobs:
           update-mode: replace
           body: |
             Hi @${{ github.event.issue.user.login }}.  
-            arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }} is ready to download: ${{ env.FIOURL }}
-            > ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}  
-            ----
+            arc-${{ env.MODEL }}-${{ env.VERSION }} is ready to download:
+            > ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-      - name: Close Issues
-        if: success()
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: 'close-issue'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.issue.number }}
+            If this isn't working, do not use customized Versions!
+            ----
 
       - name: Update Comment Fail
         if: failure()
@@ -235,10 +242,18 @@ jobs:
           update-mode: replace
           body: |
             Hi @${{ github.event.issue.user.login }}.  
-            arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }} failed to build and package, please try again.  
-            > ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}  
+            arc-${{ env.MODEL }}-${{ env.PRODUCTVER }}-${{ env.VERSION }} failed to build and package, please try again later.  
+            > ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} 
             ----
 
+      - name: Close Issues
+        if: success()
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'close-issue'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+  
   comment:
     if: github.event.label.name == 'bug'
     runs-on: ubuntu-latest

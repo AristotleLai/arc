@@ -7,10 +7,28 @@
 # eg: N i915.ko
 
 # kvm
-N irqbypass.ko
-N kvm-intel.ko
-N kvm-amd.ko
-N kvm.ko
+F irqbypass.ko
+F kvm-intel.ko
+F kvm-amd.ko
+F kvm.ko
+
+# acpi
+N acpi_call.ko
+N acpi-cpufreq.ko
+N processor.ko
+N button.ko
+
+# cpufreq
+N cpufreq_governor.ko
+N cpufreq_ondemand.ko
+N cpufreq_conservative.ko
+N cpufreq_performance.ko
+N cpufreq_powersave.ko
+N cpufreq_userspace.ko
+N cpufreq_stats.ko
+
+# misc
+N check_signature.ko
 
 # sensors
 N coretemp.ko
@@ -23,9 +41,10 @@ N nct6683.ko
 N nct6775.ko
 
 # rndis
-#F mii.ko
-#F cdc_ether.ko
-#F rndis_host.ko
+N mii.ko
+N cdc_ether.ko
+N rndis_host.ko
+N r8152.ko
 
 ## i915
 #N dmabuf.ko
