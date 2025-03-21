@@ -93,7 +93,7 @@ jobs:
       # Build incremental
       - name: Build image
         run: |
-          . scripts/func.sh
+          . scripts/functions.sh
 
           function writeConfigKey() {
             [ "${2}" = "{}" ] && sudo yq eval '.'${1}' = {}' --inplace "${3}" 2>/dev/null || sudo yq eval '.'${1}' = "'"${2}"'"' --inplace "${3}" 2>/dev/null
@@ -138,7 +138,6 @@ jobs:
               writeConfigKey "addons.\"${A}\"" "${VALUE}" "${PRESET_CONFIG_FILE}"
             done
           fi
-          writeConfigKey "automated" "true" "${PRESET_CONFIG_FILE}"
           echo "$(cat "${PRESET_CONFIG_FILE}")"
           sudo echo "arc-${MODEL}-${PRODUCTVER:0:3}-${TAG}" >"/tmp/automated"
           sudo mv -f "/tmp/automated" "/tmp/p3/automated"

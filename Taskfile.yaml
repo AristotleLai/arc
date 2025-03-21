@@ -3,23 +3,18 @@
 version: "3"
 
 tasks:
-  build-ext:
+  build-evo:
     cmds:
       - git reset --hard
       - git pull
-      - ./img-gen.sh ext
+      - ./img-gen.sh evo
 
   build-min:
     cmds:
       - git reset --hard
       - git pull
-      - ./img-gen.sh min
+      - ./img-gen.sh minimal
 
-  build-micro:
-    cmds:
-      - git reset --hard
-      - git pull
-      - ./img-gen.sh micro
 
   compile-kpatch:
     dir: kpatch

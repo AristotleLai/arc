@@ -11,7 +11,7 @@ set -e
 # Clean cached Files
 sudo git clean -fdx
 
-. scripts/func.sh "${AUX_TOKEN}"
+. scripts/functions.sh "${AUX_TOKEN}"
 
 # Unmount Image File
 sudo umount "/tmp/p1" 2>/dev/null || true
@@ -28,9 +28,8 @@ getLKMs "files/p3/lkms"
 getTheme "files/p1/boot/grub"
 getOffline "files/p3/configs"
 case "${1}" in
-  min) getBuildroot "${1}" "br" ;;
-  ext) getBuildroot "${1}" "br" ;;
-  micro) getBuildroot "${1}" "br" ;;
+  evo) getBuildroot "${1}" "br" ;;
+  minimal) getBuildroot "${1}" "br" ;;
   *) echo "Invalid option specified" ;;
 esac
 
@@ -68,7 +67,7 @@ fi
 echo "Copying files"
 sudo cp -rf "files/p1/"* "/tmp/p1"
 sudo cp -rf "files/p3/"* "/tmp/p3"
-sync
+sudo sync
 
 echo "Unmount image file"
 sudo umount "/tmp/p1"

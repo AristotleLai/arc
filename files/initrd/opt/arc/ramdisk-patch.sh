@@ -38,7 +38,6 @@ RD_COMPRESSED="$(readConfigKey "rd-compressed" "${USER_CONFIG_FILE}")"
 PRODUCTVER="$(readConfigKey "productver" "${USER_CONFIG_FILE}")"
 BUILDNUM="$(readConfigKey "buildnum" "${USER_CONFIG_FILE}")"
 SMALLNUM="$(readConfigKey "smallnum" "${USER_CONFIG_FILE}")"
-ARCBRANCH="$(readConfigKey "arc.branch" "${USER_CONFIG_FILE}")"
 # Read new PAT Info from Config
 PAT_URL="$(readConfigKey "paturl" "${USER_CONFIG_FILE}")"
 PAT_HASH="$(readConfigKey "pathash" "${USER_CONFIG_FILE}")"
@@ -51,7 +50,7 @@ if [[ -n "${BUILDNUM}" && ("${PRODUCTVER}" != "${majorversion}.${minorversion}" 
   NEWVER="${majorversion}.${minorversion}(${buildnumber}$([[ ${smallfixnumber:-0} -ne 0 ]] && echo "u${smallfixnumber}"))"
   PAT_URL=""
   PAT_HASH=""
-  echo "\nVersion changed from ${OLDVER} to ${NEWVER}"
+  echo -e "Version changed from ${OLDVER} to ${NEWVER}"
 fi
 
 # Re-read PAT_URL and PAT_HASH if they are empty or commented out
@@ -117,6 +116,16 @@ for PATCH in "${PATCHES[@]}"; do
   done
 done
 
+# Add serial number to synoinfo.conf, to help to recovery a installed DSM
+echo "Set synoinfo SN" >"${LOG_FILE}"
+_set_conf_kv "SN" "${SN}" "${RAMDISK_PATH}/etc/synoinfo.conf" >>"${LOG_FILE}" 2>&1 || exit 1
+_set_conf_kv "SN" "${SN}" "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" >>"${LOG_FILE}" 2>&1 || exit 1
+for KEY in "${!SYNOINFO[@]}"; do
+  echo "Set synoinfo ${KEY}" >>"${LOG_FILE}"
+  _set_conf_kv "${KEY}" "${SYNOINFO[${KEY}]}" "${RAMDISK_PATH}/etc/synoinfo.conf" >>"${LOG_FILE}" 2>&1 || exit 1
+  _set_conf_kv "${KEY}" "${SYNOINFO[${KEY}]}" "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" >>"${LOG_FILE}" 2>&1 || exit 1
+done
+
 # Patch /sbin/init.post
 grep -v -e '^[\t ]*#' -e '^$' "${PATCH_PATH}/config-manipulators.sh" >"${TMP_PATH}/rp.txt"
 sed -e "/@@@CONFIG-MANIPULATORS-TOOLS@@@/ {" -e "r ${TMP_PATH}/rp.txt" -e 'd' -e '}' -i "${RAMDISK_PATH}/sbin/init.post"
@@ -152,7 +161,7 @@ mkdir -p "${RAMDISK_PATH}/addons"
   echo "export LOADERLABEL=\"ARC\""
   echo "export LOADERVERSION=\"${ARC_VERSION}\""
   echo "export LOADERBUILD=\"${ARC_BUILD}\""
-  echo "export LOADERBRANCH=\"${ARCBRANCH}\""
+  echo "export LOADERBRANCH=\"${ARC_BRANCH}\""
   echo "export PLATFORM=\"${PLATFORM}\""
   echo "export MODEL=\"${MODEL}\""
   echo "export MODELID=\"${MODELID}\""
@@ -164,8 +173,14 @@ mkdir -p "${RAMDISK_PATH}/addons"
 } >"${RAMDISK_PATH}/addons/addons.sh"
 chmod +x "${RAMDISK_PATH}/addons/addons.sh"
 
+# Add redpill Addon if Platform is epyc7002
+if [ "${PLATFORM}" = "epyc7002" ]; then
+  installAddon "redpill" "${PLATFORM}" || exit 1
+  echo "/addons/redpill.sh \${1}" >>"${RAMDISK_PATH}/addons/addons.sh" 2>>"${LOG_FILE}" || exit 1
+fi
+
 # System Addons
-for ADDON in redpill revert misc eudev disks localrss notify wol mountloader; do
+for ADDON in "revert" "misc" "eudev" "disks" "localrss" "notify" "wol" "mountloader"; do
   PARAMS=""
   if [ "${ADDON}" = "disks" ]; then
     HDDSORT="$(readConfigKey "hddsort" "${USER_CONFIG_FILE}")"
@@ -187,8 +202,6 @@ done
 echo "inetd" >>"${RAMDISK_PATH}/addons/addons.sh"
 
 echo "Modify files" >"${LOG_FILE}"
-# Remove function from scripts
-[ "2" = "${PRODUCTVER:2:1}" ] && sed -i 's/function //g' $(find "${RAMDISK_PATH}/addons/" -type f -name "*.sh")
 
 # Build modules dependencies
 # ${ARC_PATH}/depmod -a -b ${RAMDISK_PATH} 2>/dev/null
@@ -203,7 +216,7 @@ fi
 # backup current loader configs
 BACKUP_PATH="${RAMDISK_PATH}/usr/arc/backup"
 rm -rf "${BACKUP_PATH}"
-for F in "${USER_GRUB_CONFIG}" "${USER_CONFIG_FILE}" "${USER_UP_PATH}"; do
+for F in "${USER_GRUB_CONFIG}" "${USER_CONFIG_FILE}" "${USER_UP_PATH}" "${HW_KEY}"; do
   if [ -f "${F}" ]; then
     FD="$(dirname "${F}")"
     mkdir -p "${FD/\/mnt/${BACKUP_PATH}}"
@@ -227,14 +240,14 @@ done
 
 # SA6400 patches
 if [ "${PLATFORM}" = "epyc7002" ]; then
-  echo -n " - Apply Epyc7002 Fixes"
+  echo -e "Apply Epyc7002 Fixes"
   sed -i 's#/dev/console#/var/log/lrc#g' ${RAMDISK_PATH}/usr/bin/busybox
   sed -i '/^echo "START/a \\nmknod -m 0666 /dev/console c 1 3' ${RAMDISK_PATH}/linuxrc.syno
 fi
 
 # Broadwellntbap patches
 if [ "${PLATFORM}" = "broadwellntbap" ]; then
-  echo -n " - Apply Broadwellntbap Fixes"
+  echo -e "Apply Broadwellntbap Fixes"
   sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' ${RAMDISK_PATH}/usr/syno/share/environments.sh
 fi
 
