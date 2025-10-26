@@ -232,7 +232,7 @@ if [ "${HDDSORT}" = "true" ]; then
 fi
 
 if [ "${USBMOUNT}" = "true" ]; then
-  CMDLINE['usbasinternal']=""
+  CMDLINE['usbinternal']=""
 fi
 
 if is_in_array "${PLATFORM}" "${XAPICRL[@]}"; then
