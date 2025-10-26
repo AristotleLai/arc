@@ -737,7 +737,7 @@ function dependenciesUpdate() {
     dialog --infobox "Some updates failed! Try again later." 3 40
   else
     dialog --infobox "All selected updates completed successfully!" 3 40
-    resetBuild
+    resetBuildstatus
   fi
 
   sleep 3

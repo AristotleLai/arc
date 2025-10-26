@@ -3351,14 +3351,14 @@ function getmap() {
         ATAPORT="$(echo "${LINE}" | grep -o 'ata[0-9]*')"
         PORT=$(echo "${ATAPORT}" | sed 's/ata//')
         HOSTPORTS["${PORT}"]=$(echo "${LINE}" | grep -o 'host[0-9]*$')
-      done <<<$(ls -l /sys/class/scsi_host | grep -F "${PCI}")
+      done < <(ls -l /sys/class/scsi_host | grep -F "${PCI}")
       while read -r PORT; do
         ls -l /sys/block | grep -F -q "${PCI}/ata${PORT}" && ATTACH=1 || ATTACH=0
         PCMD=$(cat /sys/class/scsi_host/${HOSTPORTS[${PORT}]}/ahci_port_cmd)
         [ "${PCMD}" = 0 ] && DUMMY=1 || DUMMY=0
         [[ "${ATTACH}" = 1 && "${DUMMY}" = 0 ]] && CONPORTS="$((${CONPORTS} + 1))" && echo "$((${PORT} - 1))" >>"${TMP_PATH}/ports"
         NUMPORTS=$((${NUMPORTS} + 1))
-      done <<<$(echo ${!HOSTPORTS[@]} | tr ' ' '\n' | sort -n)
+      done < <(echo ${!HOSTPORTS[@]} | tr ' ' '\n' | sort -n)
       [ "${NUMPORTS}" -gt 8 ] && NUMPORTS=8
       [ "${CONPORTS}" -gt 8 ] && CONPORTS=8
       echo -n "${NUMPORTS}" >>"${TMP_PATH}/drivesmax"
@@ -3369,6 +3369,7 @@ function getmap() {
       let DISKIDXMAPIDXMAX=$DISKIDXMAPIDXMAX+$NUMPORTS
       SATADRIVES=$((${SATADRIVES} + ${CONPORTS}))
     done
+    writeConfigKey "device.satadrives" "${SATADRIVES:-0}" "${USER_CONFIG_FILE}"
   fi
 
   # Process NVMe Disks
@@ -3380,7 +3381,7 @@ function getmap() {
       PORTNUM=$(lsscsi -bS 2>/dev/null | awk '$3 != "0"' | grep -v - | grep "\[N:${PORT}:" | wc -l)
       NVMEDRIVES=$((NVMEDRIVES + PORTNUM))
     done
-    writeConfigKey "device.nvmedrives" "${NVMEDRIVES}" "${USER_CONFIG_FILE}"
+    writeConfigKey "device.nvmedrives" "${NVMEDRIVES:-0}" "${USER_CONFIG_FILE}"
   fi
 
   # Process MMC Disks
@@ -3392,7 +3393,7 @@ function getmap() {
       PORTNUM=$(lsscsi -bS 2>/dev/null | awk '$3 != "0"' | grep -v - | grep "\[M:${PORT}:" | wc -l)
       MMCDRIVES=$((MMCDRIVES + PORTNUM))
     done
-    writeConfigKey "device.mmcdrives" "${MMCDRIVES}" "${USER_CONFIG_FILE}"
+    writeConfigKey "device.mmcdrives" "${MMCDRIVES:-0}" "${USER_CONFIG_FILE}"
   fi
 
   # Process SAS Disks
@@ -3404,7 +3405,7 @@ function getmap() {
       PORTNUM=$(lsscsi -bS 2>/dev/null | awk '$3 != "0"' | grep -v - | grep "\[${PORT}:" | wc -l)
       SASDRIVES=$((SASDRIVES + PORTNUM))
     done
-    writeConfigKey "device.sasdrives" "${SASDRIVES}" "${USER_CONFIG_FILE}"
+    writeConfigKey "device.sasdrives" "${SASDRIVES:-0}" "${USER_CONFIG_FILE}"
   fi
 
   # Process SCSI Disks
@@ -3416,7 +3417,7 @@ function getmap() {
       PORTNUM=$(lsscsi -bS 2>/dev/null | awk '$3 != "0"' | grep -v - | grep "\[${PORT}:" | wc -l)
       SCSIDRIVES=$((SCSIDRIVES + PORTNUM))
     done
-    writeConfigKey "device.scsidrives" "${SCSIDRIVES}" "${USER_CONFIG_FILE}"
+    writeConfigKey "device.scsidrives" "${SCSIDRIVES:-0}" "${USER_CONFIG_FILE}"
   fi
 
   # Process RAID Disks
@@ -3428,7 +3429,7 @@ function getmap() {
       PORTNUM=$(lsscsi -bS 2>/dev/null | awk '$3 != "0"' | grep -v - | grep "\[${PORT}:" | wc -l)
       RAIDDRIVES=$((RAIDDRIVES + PORTNUM))
     done
-    writeConfigKey "device.raiddrives" "${RAIDDRIVES}" "${USER_CONFIG_FILE}"
+    writeConfigKey "device.raiddrives" "${RAIDDRIVES:-0}" "${USER_CONFIG_FILE}"
   fi
 
   # Process USB Disks
@@ -3440,7 +3441,7 @@ function getmap() {
       PORTNUM=$(lsscsi -bS 2>/dev/null | awk '$3 != "0"' | grep -v - | grep "\[${PORT}:" | wc -l)
       USBDRIVES=$((USBDRIVES + PORTNUM))
     done
-    writeConfigKey "device.usbdrives" "${USBDRIVES}" "${USER_CONFIG_FILE}"
+    writeConfigKey "device.usbdrives" "${USBDRIVES:-0}" "${USER_CONFIG_FILE}"
   fi
 
   # Write Disk Counts to Config
