@@ -159,6 +159,9 @@ elif [ "${ARC_MODE}" = "config" ]; then
         write_menu "6" "\Z1Hide Boot Options\Zn"
         write_menu "f" "Bootscreen Options"
         write_menu_value "m" "Boot Kernelload" "${KERNELLOAD}"
+        if [ "${DT}" = "true" ]; then
+          write_menu_value "v" "Switch Serialport" "$( [ "${ALTCONSOLE}" = "true" ] && echo "enabled" || echo "disabled" )"
+        fi
         write_menu_value "E" "eMMC Boot Support" "$( [ "${EMMCBOOT}" = "true" ] && echo "enabled" || echo "disabled" )"
         if [ "${DIRECTBOOT}" = "false" ]; then
           write_menu_value "i" "Boot IP Waittime" "${BOOTIPWAIT}"
@@ -275,6 +278,11 @@ elif [ "${ARC_MODE}" = "config" ]; then
             NEXT="6"
             ;;
           f) bootScreen; NEXT="f" ;;
+          v)
+            [ "${ALTCONSOLE}" = "true" ] && ALTCONSOLE='false' || ALTCONSOLE='true'
+            writeConfigKey "arc.altconsole" "${ALTCONSOLE}" "${USER_CONFIG_FILE}"
+            NEXT="v"
+            ;;
           m)
             [ "${KERNELLOAD}" = "kexec" ] && KERNELLOAD='power' || KERNELLOAD='kexec'
             writeConfigKey "kernelload" "${KERNELLOAD}" "${USER_CONFIG_FILE}"

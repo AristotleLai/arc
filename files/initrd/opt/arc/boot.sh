@@ -68,6 +68,7 @@ USBMOUNT="$(readConfigKey "usbmount" "${USER_CONFIG_FILE}")"
 HDDSORT="$(readConfigKey "hddsort" "${USER_CONFIG_FILE}")"
 BUILDDONE="$(readConfigKey "arc.builddone" "${USER_CONFIG_FILE}")"
 ARC_PATCH="$(readConfigKey "arc.patch" "${USER_CONFIG_FILE}")"
+ALTCONSOLE="$(readConfigKey "arc.altconsole" "${USER_CONFIG_FILE}")"
 
 # Build Sanity Check
 if [ "${BUILDDONE}" = "false" ]; then
@@ -194,8 +195,13 @@ else
 fi
 
 if [ "${DT}" = "true" ]; then
-  CMDLINE['syno_ttyS0']="serial,0x3f8" # to check because of issues with msi (possible fix 0x3e8)
-  CMDLINE['syno_ttyS1']="serial,0x2f8" # to check because of issues with msi (possible fix 0x2e8)
+  if [ "${ALTCONSOLE}" = "true" ]; then
+    CMDLINE['syno_ttyS0']="serial,0x3e8"
+    CMDLINE['syno_ttyS1']="serial,0x2e8"
+  else
+    CMDLINE['syno_ttyS0']="serial,0x3f8"
+    CMDLINE['syno_ttyS1']="serial,0x2f8"
+  fi
 else
   CMDLINE['SMBusHddDynamicPower']="1"
   CMDLINE['syno_hdd_detect']="0"

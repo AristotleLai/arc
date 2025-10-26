@@ -587,6 +587,7 @@ function readData() {
   USBCONTROLLER="$(readConfigKey "device.usbcontroller" "${USER_CONFIG_FILE}")"
 
   # Advanced Config
+  ALTCONSOLE="$(readConfigKey "arc.altconsole" "${USER_CONFIG_FILE}")"
   ARC_OFFLINE="$(readConfigKey "arc.offline" "${USER_CONFIG_FILE}")"
   BOOTIPWAIT="$(readConfigKey "bootipwait" "${USER_CONFIG_FILE}")"
   DIRECTBOOT="$(readConfigKey "directboot" "${USER_CONFIG_FILE}")"
