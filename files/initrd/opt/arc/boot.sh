@@ -90,8 +90,7 @@ if [ -f "${PART1_PATH}/GRUB_VER" ]; then
 fi
 if [ "${DSMINFO}" = "true" ]; then
   echo -e "\033[1;34mDSM\033[0m"
-  echo -e "Model: \033[1;37m${MODEL}\033[0m"
-  echo -e "System: \033[1;37m${SYS_MODEL}\033[0m"
+  echo -e "Model: \033[1;37m${MODEL} (${SYS_MODEL})\033[0m"
   echo -e "Platform: \033[1;37m${PLATFORM}\033[0m"
   echo -e "Version: \033[1;37m${PRODUCTVER} (${BUILDNUM}$([ ${SMALLNUM:-0} -ne 0 ] && echo "u${SMALLNUM}"))\033[0m"
   echo -e "Kernel: \033[1;37m${KVER} (${KERNEL})\033[0m"
@@ -127,7 +126,7 @@ else
   fi
 fi
 
-if checkBIOS_VT_d && [ ${KVER:0:1} -lt 5 ]; then
+if checkBIOS_VT_d && [ "${KVER:0:1}" -lt 5 ]; then
   echo -e "\033[1;31m*** Notice: Disable Intel(VT-d)/AMD(AMD-V) in BIOS/UEFI settings if you encounter a boot issues. ***\033[0m"
   echo
 fi
