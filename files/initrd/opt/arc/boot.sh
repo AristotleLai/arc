@@ -151,7 +151,6 @@ CMDLINE['sn']="${SN}"
 
 # NIC Cmdline
 ETHX="$(find /sys/class/net/ -mindepth 1 -maxdepth 1 -name 'eth*' -exec basename {} \; | sort)"
-ETHN="$(wc -w <<< "${ETHX}")"
 NIC=0
 for N in ${ETHX}; do
   MAC="$(readConfigKey "${N}" "${USER_CONFIG_FILE}")"
@@ -304,8 +303,8 @@ else
 
   BOOTIPWAIT="$(readConfigKey "bootipwait" "${USER_CONFIG_FILE}")"
   [ -z "${BOOTIPWAIT}" ] && BOOTIPWAIT=20
-  echo -e "\033[1;37mDetected ${ETHN} NIC:\033[0m"
-  [ ! -f /var/run/dhcpcd/pid ] && /etc/init.d/S41dhcpcd restart >/dev/null 2>&1 && sleep 3 || true
+  echo -e "\033[1;37mDetected ${NIC} NIC:\033[0m"
+  [ ! -f /var/run/dhcpcd/pid ] && /etc/init.d/S41dhcpcd restart >/dev/null 2>&1 || true
   IPCON=""
   checkNIC || true
   echo
