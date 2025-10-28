@@ -151,15 +151,12 @@ CMDLINE['sn']="${SN}"
 
 # NIC Cmdline
 ETHX="$(find /sys/class/net/ -mindepth 1 -maxdepth 1 -name 'eth*' -exec basename {} \; | sort)"
-ETHM="$(readConfigKey "${MODEL}.ports" "${S_FILE}")"
 ETHN="$(wc -w <<< "${ETHX}")"
-ETHM="${ETHM:-${ETHN}}"
 NIC=0
 for N in ${ETHX}; do
   MAC="$(readConfigKey "${N}" "${USER_CONFIG_FILE}")"
   [ -z "${MAC}" ] && MAC="$(cat /sys/class/net/${N}/address 2>/dev/null)"
   CMDLINE["mac$((++NIC))"]="${MAC}"
-  [ "${NIC}" -ge "${ETHM}" ] && break
 done
 CMDLINE['netif_num']="${NIC}"
 
