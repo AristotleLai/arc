@@ -79,6 +79,7 @@ writeConfigKey "smallnum" "${SMALLNUM}" "${USER_CONFIG_FILE}"
 
 # Read addons, modules and synoinfo
 declare -A ADDONS
+declare -A SYSADDONS
 declare -A MODULES
 declare -A SYNOINFO
 
@@ -134,12 +135,13 @@ echo "Create addons.sh" >>"${LOG_FILE}"
 chmod +x "${RAMDISK_PATH}/addons/addons.sh"
 
 # System Addons
-SYSADDONS="revert misc eudev disks localrss notify mountloader"
-if [ "${KVER:0:1}" = "5" ]; then
-  SYSADDONS="redpill ${SYSADDONS}"
+SYSADDONS=("revert" "misc" "eudev" "disks" "localrss" "notify" "mountloader")
+
+if [[ "${KVER:0:1}" == "5" ]]; then
+  SYSADDONS=("redpill" "${SYSADDONS[@]}")
 fi
 
-for ADDON in ${SYSADDONS}; do
+for ADDON in "${SYSADDONS[@]}"; do
   if [ "${ADDON}" = "disks" ]; then
     [ -f "${USER_UP_PATH}/model.dts" ] && cp -f "${USER_UP_PATH}/model.dts" "${RAMDISK_PATH}/addons/model.dts"
     [ -f "${USER_UP_PATH}/${MODEL}.dts" ] && cp -f "${USER_UP_PATH}/${MODEL}.dts" "${RAMDISK_PATH}/addons/model.dts"
@@ -185,15 +187,15 @@ for KEY in "${!SYNOINFO[@]}"; do
   _set_conf_kv "${RAMDISK_PATH}/etc/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}" || exit 1
   _set_conf_kv "${RAMDISK_PATH}/etc.defaults/synoinfo.conf" "${KEY}" "${SYNOINFO[${KEY}]}" || exit 1
 done
-rm -f "${RAMDISK_PATH}/usr/bin/get_key_value"
+# rm -f "${RAMDISK_PATH}/usr/bin/get_key_value"
 if [ ! -x "${RAMDISK_PATH}/usr/bin/get_key_value" ]; then
   printf '#!/bin/sh\n%s\n_get_conf_kv "$@"' "$(declare -f _get_conf_kv)" >"${RAMDISK_PATH}/usr/bin/get_key_value"
-  chmod a+x "${RAMDISK_PATH}/usr/bin/get_key_value"
+  chmod +x "${RAMDISK_PATH}/usr/bin/get_key_value"
 fi
-rm -rf "${RAMDISK_PATH}/usr/bin/set_key_value"
+# rm -rf "${RAMDISK_PATH}/usr/bin/set_key_value"
 if [ ! -x "${RAMDISK_PATH}/usr/bin/set_key_value" ]; then
   printf '#!/bin/sh\n%s\n_set_conf_kv "$@"' "$(declare -f _set_conf_kv)" >"${RAMDISK_PATH}/usr/bin/set_key_value"
-  chmod a+x "${RAMDISK_PATH}/usr/bin/set_key_value"
+  chmod +x "${RAMDISK_PATH}/usr/bin/set_key_value"
 fi
 
 # Copying modulelist
@@ -240,15 +242,6 @@ if [ "${PLATFORM}" = "broadwellntbap" ]; then
   echo -e ">> apply Broadwellntbap Fixes"
   sed -i 's/IsUCOrXA="yes"/XIsUCOrXA="yes"/g; s/IsUCOrXA=yes/XIsUCOrXA=yes/g' "${RAMDISK_PATH}/usr/syno/share/environments.sh"
 fi
-
-
-# Call user patch scripts
-for F in ${SCRIPTS_PATH}/*.sh; do
-  [ ! -e "${F}" ] && continue
-  echo "Calling ${F}" >"${LOG_FILE}"
-  # shellcheck source=/dev/null
-  . "${F}" >>"${LOG_FILE}" 2>&1 || exit 1
-done
 
 # Reassembly ramdisk
 rm -f "${MOD_RDGZ_FILE}"
