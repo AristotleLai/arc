@@ -38,7 +38,7 @@ printf "\033[1;34m%*s\033[0m\n" $(((${#TITLE} + ${COLUMNS}) / 2)) "${TITLE}"
 TITLE="Boot:"
 [ "${EFI}" = "1" ] && TITLE+=" UEFI" || TITLE+=" BIOS"
 TITLE+=" | Device: ${BUS} | Mode: ${ARC_MODE}"
-printf "\033[1;34m%*s\033[0m\n" $(((${#TITLE} + ${COLUMNS}) / 2)) "${TITLE}"
+printf "\033[1;37m%*s\033[0m\n" $(((${#TITLE} + ${COLUMNS}) / 2)) "${TITLE}"
 
 # Check if DSM zImage/Ramdisk is changed, patch it if necessary, update Files if necessary
 ZIMAGE_HASH="$(readConfigKey "zimage-hash" "${USER_CONFIG_FILE}")"
@@ -303,7 +303,7 @@ else
 
   BOOTIPWAIT="$(readConfigKey "bootipwait" "${USER_CONFIG_FILE}")"
   [ -z "${BOOTIPWAIT}" ] && BOOTIPWAIT=20
-  echo -e "\033[1;37mDetected ${NIC} NIC:\033[0m"
+  echo -e "\033[1;34mNetwork (${NIC} NIC)\033[0m"
   [ ! -f /var/run/dhcpcd/pid ] && /etc/init.d/S41dhcpcd restart >/dev/null 2>&1 || true
   IPCON=""
   checkNIC || true
@@ -328,10 +328,8 @@ else
   done
 
   echo -e "\033[1;37mLoading DSM Kernel...\033[0m"
-  # _bootwait
+  _bootwait
   
-  sleep 2
-
   KERNELLOAD="$(readConfigKey "kernelload" "${USER_CONFIG_FILE}")"
   [ -z "${KERNELLOAD}" ] && KERNELLOAD="kexec"
   [ "${KERNELLOAD}" = "kexec" ] && kexec -e || poweroff
