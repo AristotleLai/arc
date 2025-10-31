@@ -208,7 +208,6 @@ function _sort_netif() {
     /etc/init.d/S40network start >/dev/null 2>&1
     /etc/init.d/S41dhcpcd start >/dev/null 2>&1
   fi
-  return
 }
 
 ###############################################################################
@@ -239,7 +238,6 @@ function getIP() {
     [ -z "${IP}" ] && IP=$(ip route show 2>/dev/null | sed -n 's/.* via .* src \(.*\) metric .*/\1/p' | head -1)
   fi
   echo "${IP}"
-  return
 }
 
 ###############################################################################
@@ -249,7 +247,6 @@ function findDSMRoot() {
   [ -z "${DSMROOTS}" ] && DSMROOTS="$(mdadm --detail --scan 2>/dev/null | grep -v "INACTIVE-ARRAY" | grep -E "name=SynologyNAS:0|name=DiskStation:0|name=SynologyNVR:0|name=BeeStation:0" | awk '{print $2}' | uniq)"
   [ -z "${DSMROOTS}" ] && DSMROOTS="$(lsblk -pno KNAME,PARTN,FSTYPE,FSVER,LABEL | grep -E "sd[a-z]{1,2}1" | grep -w "linux_raid_member" | grep "0.9" | awk '{print $1}')"
   echo "${DSMROOTS}"
-  return
 }
 
 ###############################################################################
@@ -262,7 +259,6 @@ function convert_netmask() {
       bits=$((${bits} + ${#binbits}))
   done
   echo "${bits}"
-  return
 }
 
 ###############################################################################
@@ -284,7 +280,6 @@ function setCmdline() {
   else
     grub-editenv ${USER_GRUBENVFILE} unset "${1}"
   fi
-  return
 }
 
 ###############################################################################
@@ -296,7 +291,6 @@ function addCmdline() {
   local CMDLINE="$(grub-editenv ${USER_GRUBENVFILE} list 2>/dev/null | grep "^${1}=" | cut -d'=' -f2-)"
   [ -n "${CMDLINE}" ] && CMDLINE="${CMDLINE} ${2}" || CMDLINE="${2}"
   setCmdline "${1}" "${CMDLINE}"
-  return
 }
 
 ###############################################################################
@@ -306,7 +300,6 @@ function delCmdline() {
   local CMDLINE="$(grub-editenv ${USER_GRUBENVFILE} list 2>/dev/null | grep "^${1}=" | cut -d'=' -f2-)"
   CMDLINE="$(echo "${CMDLINE}" | sed "s/ *${2}//; s/^[[:space:]]*//;s/[[:space:]]*$//")"
   setCmdline "${1}" "${CMDLINE}"
-  return
 }
 
 ###############################################################################
@@ -346,7 +339,6 @@ function rebootTo() {
   [ ! -f "${USER_GRUBENVFILE}" ] && grub-editenv "${USER_GRUBENVFILE}" create
   grub-editenv "${USER_GRUBENVFILE}" set next_entry="${1}"
   exec reboot
-  return
 }
 
 ###############################################################################
@@ -409,7 +401,6 @@ function livepatch() {
     writeConfigKey "ramdisk-hash" "${RAMDISK_HASH}" "${USER_CONFIG_FILE}"
     echo -e ">> DSM Image patched!"
   fi
-  return
 }
 
 ###############################################################################
@@ -441,7 +432,6 @@ function onlineCheck() {
   else
     writeConfigKey "arc.offline" "true" "${USER_CONFIG_FILE}"
   fi
-  return
 }
 
 ###############################################################################
@@ -473,7 +463,6 @@ function systemCheck () {
   getnetinfo
   getdiskinfo
   getmap
-  return
 }
 
 ###############################################################################
@@ -486,7 +475,6 @@ function genHWID () {
   done | sort)
   NIC_MAC="$(echo "${NIC_MACS}" | head -1)"
   echo "${CPU_ID} ${NIC_MAC}" | sha256sum | awk '{print $1}' | cut -c1-16
-  return
 }
 
 ###############################################################################
@@ -501,21 +489,6 @@ function check_port() {
       return 1
     fi
   fi
-}
-
-###############################################################################
-# Unmount disks
-function __umountNewBlDisk() {
-  umount "${TMP_PATH}/sdX1" 2>/dev/null
-  umount "${TMP_PATH}/sdX2" 2>/dev/null
-  umount "${TMP_PATH}/sdX3" 2>/dev/null
-  return
-}
-
-function __umountDSMRootDisk() {
-  umount "${TMP_PATH}/mdX"
-  rm -rf "${TMP_PATH}/mdX"
-  return
 }
 
 ###############################################################################
@@ -540,7 +513,6 @@ function _bootwait() {
   done
   rm -f WB WC
   echo -en "\r$(printf "%$((${#MSG} * 2))s" " ")\n"
-  return
 }
 
 ###############################################################################
@@ -557,7 +529,6 @@ function fixDSMRootPart() {
       fsck "${1}" >/dev/null 2>&1
     fi
   fi
-  return
 }
 
 ###############################################################################
@@ -616,19 +587,16 @@ function readData() {
   if [ "${ARC_MODE}" = "config" ] && [ "${REMOTEASSISTANCE}" = "true" ] && [ ! -f "${TMP_PATH}/remote.lock" ]; then
     remoteAssistance
   fi
-  return
 }
 
 ###############################################################################
 # Menu functions
 function write_menu() {
   echo "$1 \"$2\" " >>"${TMP_PATH}/menu"
-  return
 }
     
 function write_menu_value() {
   echo "$1 \"$2: \Z4${3:-none}\Zn\" " >>"${TMP_PATH}/menu"
-  return
 }
 
 ################################################################################
@@ -710,7 +678,6 @@ function getBoardName() {
     BOARD="not available"
   fi
   echo "${BOARD}"
-  return
 }
 
 ###############################################################################
@@ -719,11 +686,9 @@ function resetBuild() {
   writeConfigKey "arc.builddone" "false" "${USER_CONFIG_FILE}"
   BUILDDONE="$(readConfigKey "arc.builddone" "${USER_CONFIG_FILE}")"
   rm -f "${MOD_ZIMAGE_FILE}" "${MOD_RDGZ_FILE}" >/dev/null 2>&1 || true
-  return
 }
 
 function resetBuildstatus() {
   writeConfigKey "arc.builddone" "false" "${USER_CONFIG_FILE}"
   BUILDDONE="$(readConfigKey "arc.builddone" "${USER_CONFIG_FILE}")"
-  return
 }

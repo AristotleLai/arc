@@ -1055,7 +1055,7 @@ function cmdlineMenu() {
             deleteConfigKey "cmdline.nmi_watchdog" "${USER_CONFIG_FILE}"
             deleteConfigKey "cmdline.tsc" "${USER_CONFIG_FILE}"
             dialog --backtitle "$(backtitle)" --title "CPU Fix" \
-              --aspect 18 --msgbox "Fix uninstalled from Cmdline" 0 0
+              --aspect 18 --msgbox "Fix removed from Cmdline" 0 0
           fi
         done
         resetBuildstatus
@@ -1099,7 +1099,7 @@ function cmdlineMenu() {
           elif [ "${resp}" -eq 2 ]; then
             deleteConfigKey "cmdline.pci" "${USER_CONFIG_FILE}"
             dialog --backtitle "$(backtitle)" --title "PCI/IRQ Fix" \
-              --aspect 18 --msgbox "Fix uninstalled from Cmdline" 0 0
+              --aspect 18 --msgbox "Fix removed from Cmdline" 0 0
           fi
         done
         resetBuildstatus
@@ -1120,7 +1120,7 @@ function cmdlineMenu() {
           elif [ "${resp}" -eq 2 ]; then
             deleteConfigKey "cmdline.intel_idle.max_cstate" "${USER_CONFIG_FILE}"
             dialog --backtitle "$(backtitle)" --title "C-State Fix" \
-              --aspect 18 --msgbox "Fix uninstalled from Cmdline" 0 0
+              --aspect 18 --msgbox "Fix removed from Cmdline" 0 0
           fi
         done
         resetBuildstatus
@@ -1143,7 +1143,7 @@ function cmdlineMenu() {
             deleteConfigKey "cmdline.nvme.poll_queues" "${USER_CONFIG_FILE}"
             deleteConfigKey "cmdline.nvme.write_queues" "${USER_CONFIG_FILE}"
             dialog --backtitle "$(backtitle)" --title "NVMe Optimization" \
-              --aspect 18 --msgbox "Fix uninstalled from Cmdline" 0 0
+              --aspect 18 --msgbox "Fix removed from Cmdline" 0 0
           fi
         done
         resetBuildstatus
@@ -1164,7 +1164,7 @@ function cmdlineMenu() {
           elif [ "${resp}" -eq 2 ]; then
             deleteConfigKey "cmdline.mitigations" "${USER_CONFIG_FILE}"
             dialog --backtitle "$(backtitle)" --title "CPU Performance Optimization" \
-              --aspect 18 --msgbox "Fix uninstalled from Cmdline" 0 0
+              --aspect 18 --msgbox "Fix removed from Cmdline" 0 0
           fi
         done
         resetBuildstatus
@@ -3831,7 +3831,11 @@ function recoverDSM() {
     # fixDSMRootPart "${I}"
     T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
     mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
-    [ $? -ne 0 ] && continue
+    if [ $? -ne 0 ]; then
+      dialog --backtitle "$(backtitle)" --title "Mount Error" \
+        --msgbox "Failed to mount ${I} to ${TMP_PATH}/mdX. Recovery is not possible." 0 0
+      return
+    fi
     MODEL=""
     PRODUCTVER=""
     BACKUP_CONFIG="${TMP_PATH}/mdX/usr/arc/backup/p1/user-config.yml"
@@ -3840,7 +3844,7 @@ function recoverDSM() {
     if [ ! -f "${BACKUP_CONFIG}" ]; then
       sleep 3
       umount -f "${TMP_PATH}/mdX"
-      break && return
+      return
     fi
 
     MODEL="$(readConfigKey "model" "${BACKUP_CONFIG}")"
@@ -3856,7 +3860,7 @@ function recoverDSM() {
       CONFDONE="$(readConfigKey "arc.confdone" "${BACKUP_CONFIG}")"
       dialog --backtitle "$(backtitle)" --title "Restore Arc" \
         --aspect 18 --msgbox "${TEXT}" 0 0
-      [ $? -ne 0 ] && break
+      [ $? -ne 0 ] && return
       cp -af "${TMP_PATH}/mdX/usr/arc/backup/p1/"* "${PART1_PATH}" 2>/dev/null
       cp -af "${TMP_PATH}/mdX/usr/arc/backup/p2/"* "${PART2_PATH}" 2>/dev/null
       resetBuild
