@@ -151,13 +151,13 @@ CMDLINE['sn']="${SN}"
 
 # NIC Cmdline
 ETHX="$(find /sys/class/net/ -mindepth 1 -maxdepth 1 -name 'eth*' -exec basename {} \; | sort)"
-NIC=0
+ETHN=0
 for N in ${ETHX}; do
   MAC="$(readConfigKey "${N}" "${USER_CONFIG_FILE}")"
   [ -z "${MAC}" ] && MAC="$(cat /sys/class/net/${N}/address 2>/dev/null)"
-  CMDLINE["mac$((++NIC))"]="${MAC}"
+  CMDLINE["mac$((++ETHN))"]="${MAC}"
 done
-CMDLINE['netif_num']="${NIC}"
+CMDLINE['netif_num']="${ETHN}"
 
 # Boot Cmdline
 if [ "${ARC_MODE}" = "reinstall" ]; then
@@ -307,7 +307,7 @@ else
 
   BOOTIPWAIT="$(readConfigKey "bootipwait" "${USER_CONFIG_FILE}")"
   [ -z "${BOOTIPWAIT}" ] && BOOTIPWAIT=20
-  echo -e "\033[1;34mNetwork (${NIC} NIC)\033[0m"
+  echo -e "\033[1;34mNetwork (${ETHN} NIC)\033[0m"
   [ ! -f /var/run/dhcpcd/pid ] && /etc/init.d/S41dhcpcd restart >/dev/null 2>&1 || true
   IPCON=""
   checkNIC || true

@@ -1451,7 +1451,7 @@ function backupMenu() {
         MODEL="$(readConfigKey "model" "${USER_CONFIG_FILE}")"
         PRODUCTVER="$(readConfigKey "productver" "${USER_CONFIG_FILE}")"
         if [ -n "${MODEL}" ] && [ -n "${PRODUCTVER}" ]; then
-          TEXT="Config found:\nModel: ${MODEL}\nVersion: ${PRODUCTVER}"
+          TEXT="Config found!\n\nModel: ${MODEL}\nVersion: ${PRODUCTVER}"
           SN="$(readConfigKey "sn" "${USER_CONFIG_FILE}")"
           TEXT+="\nSerial: ${SN}"
           ARC_PATCH="$(readConfigKey "arc.patch" "${USER_CONFIG_FILE}")"
@@ -3846,7 +3846,7 @@ function recoverDSM() {
     MODEL="$(readConfigKey "model" "${BACKUP_CONFIG}")"
     PRODUCTVER="$(readConfigKey "productver" "${BACKUP_CONFIG}")"
     if [ -n "${MODEL}" ] && [ -n "${PRODUCTVER}" ]; then
-      TEXT="Config found:\nModel: ${MODEL}\nVersion: ${PRODUCTVER}"
+      TEXT="Config found!\n\nModel: ${MODEL}\nVersion: ${PRODUCTVER}"
       PLATFORM="$(readConfigKey "platform" "${BACKUP_CONFIG}")"
       TEXT+="\nPlatform: ${PLATFORM}"
       SN="$(readConfigKey "sn" "${BACKUP_CONFIG}")"
