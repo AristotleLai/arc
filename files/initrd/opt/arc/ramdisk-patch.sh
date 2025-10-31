@@ -79,7 +79,6 @@ writeConfigKey "smallnum" "${SMALLNUM}" "${USER_CONFIG_FILE}"
 
 # Read addons, modules and synoinfo
 declare -A ADDONS
-declare -A SYSADDONS
 declare -A MODULES
 declare -A SYNOINFO
 
@@ -135,13 +134,13 @@ echo "Create addons.sh" >>"${LOG_FILE}"
 chmod +x "${RAMDISK_PATH}/addons/addons.sh"
 
 # System Addons
-SYSADDONS=("revert" "misc" "eudev" "disks" "localrss" "notify" "mountloader")
+SYSADDONS="revert misc eudev disks localrss notify mountloader"
 
 if [[ "${KVER:0:1}" == "5" ]]; then
-  SYSADDONS=("redpill" "${SYSADDONS[@]}")
+  SYSADDONS="redpill ${SYSADDONS}"
 fi
 
-for ADDON in "${SYSADDONS[@]}"; do
+for ADDON in ${SYSADDONS}; do
   if [ "${ADDON}" = "disks" ]; then
     [ -f "${USER_UP_PATH}/model.dts" ] && cp -f "${USER_UP_PATH}/model.dts" "${RAMDISK_PATH}/addons/model.dts"
     [ -f "${USER_UP_PATH}/${MODEL}.dts" ] && cp -f "${USER_UP_PATH}/${MODEL}.dts" "${RAMDISK_PATH}/addons/model.dts"
