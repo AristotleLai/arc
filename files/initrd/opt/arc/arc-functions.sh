@@ -2992,7 +2992,7 @@ function resetDSMNetwork {
           rm -f "${F}"
           ;;
         eth*)
-          echo -e "DEVICE=${ETHX}\nONBOOT=yes\nBOOTPROTO=dhcp\nIPV6INIT=auto_dhcp\nIPV6_ACCEPT_RA=1" >"${F}"
+          echo -e "DEVICE=${ETHX}\nONBOOT=yes\nBOOTPROTO=dhcp\nIPV6INIT=no\nIPV6_ACCEPT_RA=0" >"${F}"
           ;;
         *) ;;
         esac
