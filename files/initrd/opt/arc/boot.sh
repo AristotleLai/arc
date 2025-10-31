@@ -207,7 +207,11 @@ CMDLINE['HddHotplug']="1"
 CMDLINE['vender_format_version']="2"
 CMDLINE['skip_vender_mac_interfaces']="0,1,2,3,4,5,6,7"
 CMDLINE['earlyprintk']=""
-CMDLINE['earlycon']="uart8250,io,0x3f8,115200n8"
+if [ "${ALTCONSOLE}" = "true" ]; then
+  CMDLINE['earlycon']="uart8250,io,0x3e8,115200n8"
+else
+  CMDLINE['earlycon']="uart8250,io,0x3f8,115200n8"
+fi
 CMDLINE['console']="ttyS0,115200n8"
 CMDLINE['consoleblank']="600"
 CMDLINE['root']="/dev/md0"
@@ -217,8 +221,8 @@ CMDLINE['rootwait']=""
 CMDLINE['panic']="${KERNELPANIC:-0}"
 CMDLINE['pcie_aspm']="off"
 CMDLINE['nowatchdog']=""
-CMDLINE['intel_pstate']="disable"
-CMDLINE['amd_pstate']="disable"
+# CMDLINE['intel_pstate']="disable"
+# CMDLINE['amd_pstate']="disable"
 CMDLINE['modprobe.blacklist']="${MODBLACKLIST}"
 CMDLINE['mev']="${MEV:-physical}"
 CMDLINE['governor']="${GOVERNOR:-performance}"
@@ -318,7 +322,7 @@ else
   fi
 
   # Executes DSM kernel via KEXEC
-  kexec -l "${MOD_ZIMAGE_FILE}" --initrd "${MOD_RDGZ_FILE}" --command-line="${CMDLINE_LINE} kexecboot" >"${LOG_FILE}" 2>&1 || die "Failed to load DSM Kernel!"
+  kexec -l "${MOD_ZIMAGE_FILE}" --initrd "${MOD_RDGZ_FILE}" --command-line="${CMDLINE_LINE}" >"${LOG_FILE}" 2>&1 || die "Failed to load DSM Kernel!"
 
   for T in $(busybox w 2>/dev/null | grep -v 'TTY' | awk '{print $2}'); do
     if [ -w "/dev/${T}" ]; then
@@ -332,7 +336,7 @@ else
   
   KERNELLOAD="$(readConfigKey "kernelload" "${USER_CONFIG_FILE}")"
   [ -z "${KERNELLOAD}" ] && KERNELLOAD="kexec"
-  [ "${KERNELLOAD}" = "kexec" ] && kexec -e || poweroff
+  [ "${KERNELLOAD}" = "kexec" ] && kexec -e --real-mode || poweroff
   echo -e "\033[1;37mBooting DSM...\033[0m"
   exit 0
 fi
