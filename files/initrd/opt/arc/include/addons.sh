@@ -3,11 +3,11 @@
 # 1 - Addon
 # 2 - Platform
 function isAddonAvailable() {
-  local ADDON="${1:-}"
-  local PLATFORM="${2:-}"
+  local ADDON=${1:-}
+  local PLATFORM=${2:-}
   local MANIFEST="${ADDONS_PATH}/${ADDON}/manifest.yml"
   [ ! -f "${MANIFEST}" ] && return 1
-  local AVAILABLE="$(readConfigKey "${PLATFORM}" "${MANIFEST}")"
+  local AVAILABLE=$(readConfigKey "${PLATFORM}" "${MANIFEST}")
   [ "${AVAILABLE}" = "true" ]
 }
 
@@ -15,14 +15,14 @@ function isAddonAvailable() {
 # List available addons for a platform
 # 1 - Platform
 function availableAddons() {
-  local PLATFORM="${1:-}"
+  local PLATFORM=${1:-}
   [ -z "${PLATFORM}" ] && return 1
-  local MACHINE="$(virt-what 2>/dev/null | head -1)"
+  local MACHINE=$(virt-what 2>/dev/null | head -1)
   [ -z "${MACHINE}" ] && MACHINE="physical"
   find "${ADDONS_PATH}" -maxdepth 1 -type d 2>/dev/null | sort | while read -r D; do
     [ ! -f "${D}/manifest.yml" ] && continue
-    local ADDON="$(basename "${D}")"
-    local SYSTEM="$(readConfigKey "system" "${D}/manifest.yml")"
+    local ADDON=$(basename "${D}")
+    local SYSTEM=$(readConfigKey "system" "${D}/manifest.yml")
     [ "${SYSTEM}" = "true" ] && continue
     isAddonAvailable "${ADDON}" "${PLATFORM}" || continue
 
@@ -31,8 +31,8 @@ function availableAddons() {
       continue
     fi
 
-    local DESC="$(readConfigKey "description" "${D}/manifest.yml")"
-    local BETA="$(readConfigKey "beta" "${D}/manifest.yml")"
+    local DESC=$(readConfigKey "description" "${D}/manifest.yml")
+    local BETA=$(readConfigKey "beta" "${D}/manifest.yml")
     case "${BETA}" in
       false)    echo -e "${ADDON}\t\Z4${DESC}\Zn" ;;
       true) echo -e "${ADDON}\t\Z1${DESC}\Zn" ;;
@@ -46,9 +46,9 @@ function availableAddons() {
 # 2 - Platform
 # 3 - Kernel version
 function installAddon() {
-  local ADDON="${1:-}"
-  local PLATFORM="${2:-}"
-  local KVER="${3:-}"
+  local ADDON=${1:-}
+  local PLATFORM=${2:-}
+  local KVER=${3:-}
   [ -z "${ADDON}" ] && echo "ERROR: Addon not defined" && return 1
   isAddonAvailable "${ADDON}" "${PLATFORM}" || {
     deleteConfigKey "addon.${ADDON}" "${USER_CONFIG_FILE}"
