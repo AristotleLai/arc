@@ -2163,7 +2163,7 @@ function downgradeMenu() {
   (
     mkdir -p "${TMP_PATH}/mdX"
     for I in ${DSMROOTS}; do
-      #fixDSMRootPart "${I}"
+      fixDSMRootPart "${I}"
       T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
       mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
       [ $? -ne 0 ] && continue
@@ -2192,7 +2192,7 @@ function resetPassword() {
   rm -f "${TMP_PATH}/menu" >/dev/null
   mkdir -p "${TMP_PATH}/mdX"
   for I in ${DSMROOTS}; do
-    #fixDSMRootPart "${I}"
+    fixDSMRootPart "${I}"
     T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
     mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
     [ $? -ne 0 ] && continue
@@ -2237,7 +2237,7 @@ function resetPassword() {
   (
     mkdir -p "${TMP_PATH}/mdX"
     for I in ${DSMROOTS}; do
-      #fixDSMRootPart "${I}"
+      fixDSMRootPart "${I}"
       T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
       mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
       [ $? -ne 0 ] && continue
@@ -2290,7 +2290,7 @@ function addNewDSMUser() {
   (
     mkdir -p "${TMP_PATH}/mdX"
     for I in ${DSMROOTS}; do
-      #fixDSMRootPart "${I}"
+      fixDSMRootPart "${I}"
       T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
       mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
       [ $? -ne 0 ] && continue
@@ -2489,7 +2489,7 @@ function forceEnableDSMTelnetSSH() {
   (
     mkdir -p "${TMP_PATH}/mdX"
     for I in ${DSMROOTS}; do
-      #fixDSMRootPart "${I}"
+      fixDSMRootPart "${I}"
       T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
       mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
       [ $? -ne 0 ] && continue
@@ -2533,7 +2533,7 @@ function removeBlockIPDB {
   (
     mkdir -p "${TMP_PATH}/mdX"
     for I in ${DSMROOTS}; do
-      #fixDSMRootPart "${I}"
+      fixDSMRootPart "${I}"
       T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
       mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
       [ $? -ne 0 ] && continue
@@ -2565,7 +2565,7 @@ function disablescheduledTasks {
   (
     mkdir -p "${TMP_PATH}/mdX"
     for I in ${DSMROOTS}; do
-      #fixDSMRootPart "${I}"
+      fixDSMRootPart "${I}"
       T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
       mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
       [ $? -ne 0 ] && continue
@@ -2811,7 +2811,7 @@ function greplogs() {
   if [ -n "${DSMROOTS}" ]; then
     mkdir -p "${TMP_PATH}/mdX"
     for I in ${DSMROOTS}; do
-      #fixDSMRootPart "${I}"
+      fixDSMRootPart "${I}"
       T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
       mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
       [ $? -ne 0 ] && continue
@@ -3833,7 +3833,7 @@ function recoverDSM() {
   [ -z "${DSMROOTS}" ] && return
   mkdir -p "${TMP_PATH}/mdX"
   for I in ${DSMROOTS}; do
-    # fixDSMRootPart "${I}"
+    fixDSMRootPart "${I}"
     T="$(blkid -o value -s TYPE "${I}" 2>/dev/null | sed 's/linux_raid_member/ext4/')"
     mount -t "${T:-ext4}" "${I}" "${TMP_PATH}/mdX"
     if [ $? -ne 0 ]; then
