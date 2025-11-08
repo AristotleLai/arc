@@ -79,6 +79,11 @@ function arcModel() {
           fi
           [ -z "$(grep -w "${M}" "${S_FILE}")" ] && COMPATIBLE=0
           [ -z "$(grep -w "${A}" "${P_FILE}")" ] && COMPATIBLE=0
+          if [ "${M}" != "SA6400" ] && [ "${MEV}" = "hyperv" ]; then
+            COMPATIBLE=0
+          elif [ "${M}" = "SA6400" ] && [ "${MEV}" = "hyperv" ]; then
+            echo -e "${WARN}- Hyper-V VM: You need to enable the custom kernel\n" >>"${TMP_PATH}/${M}_warn"
+          fi
         else
           WARN="" && rm -f "${TMP_PATH}/${M}_warn"
           if [ -n "${FLAGS}" ]; then
