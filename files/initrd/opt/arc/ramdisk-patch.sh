@@ -172,7 +172,7 @@ installModules "${PLATFORM}" "${KVERP}" "${!MODULES[@]}" || exit 1
 if [ -f "${USER_UP_PATH}/modulelist" ]; then
   cp -f "${USER_UP_PATH}/modulelist" "${RAMDISK_PATH}/addons/modulelist"
 else
-  cp -f "${WORK_PATH}/include/modulelist" "${RAMDISK_PATH}/addons/modulelist"
+  cp -f "${ARC_PATH}/include/modulelist" "${RAMDISK_PATH}/addons/modulelist"
 fi
 
 # Synoinfo
