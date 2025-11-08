@@ -1743,8 +1743,6 @@ function sysinfo() {
     COUNT=0
     DRIVER="$(basename "$(realpath "/sys/class/net/${N}/device/driver" 2>/dev/null)" 2>/dev/null)"
     MAC="$(cat "/sys/class/net/${N}/address" 2>/dev/null)"
-    PCIDN="$(awk -F= '/PCI_SLOT_NAME/ {print $2}' "/sys/class/net/${N}/device/uevent" 2>/dev/null)"
-    LNAME="$(lspci -s ${PCIDN} 2>/dev/null | sed "s/.*: //")"
     TEXT+="\n  ${N}: ${LNAME:-"unspecified"}"
     while true; do
       if [ -z "$(cat "/sys/class/net/${N}/carrier" 2>/dev/null)" ]; then
@@ -1762,7 +1760,7 @@ function sysinfo() {
       COUNT=$((${COUNT} + 1))
       IP="$(getIP "${N}")"
       if [ -n "${IP}" ]; then
-        SPEED="$(ethtool ${N} 2>/dev/null | grep "Speed:" | awk '{print $2}')"
+        SPEED="$(ethtool ${N} 2>/dev/null | awk '/Speed:/ {print $2}')"
         if [[ "${IP}" =~ ^169\.254\..* ]]; then
           TEXT+="\n  ${DRIVER} (${SPEED} | ${MAC}): \ZbLINK LOCAL (No DHCP server found.)\Zn"
         else

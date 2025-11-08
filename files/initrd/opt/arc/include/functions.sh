@@ -46,7 +46,7 @@ function arc_mode() {
 ###############################################################################
 # Check for NIC and IP
 function checkNIC() {
-  # Get Amount of NIC
+  IPCON=""
   local BOOTIPWAIT="$(readConfigKey "bootipwait" "${USER_CONFIG_FILE}")"
   [ -z "${BOOTIPWAIT}" ] && BOOTIPWAIT="20"
   ETHX="$(find /sys/class/net/ -mindepth 1 -maxdepth 1 -name 'eth*' -exec basename {} \; | sort)"
@@ -65,7 +65,7 @@ function checkNIC() {
       COUNT=$((COUNT + 1))
       IP="$(getIP "${N}")"
       if [ -n "${IP}" ]; then
-        SPEED=$(ethtool ${N} 2>/dev/null | awk '/Speed:/ {print $2}')
+        SPEED="$(ethtool ${N} 2>/dev/null | awk '/Speed:/ {print $2}')"
         if echo "${IP}" | grep -q "^169\.254\."; then
           echo -e "\r${DRIVER} (${SPEED}): \033[1;37mLINK LOCAL (No DHCP server found.)\033[0m"
         else

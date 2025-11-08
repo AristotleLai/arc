@@ -195,7 +195,6 @@ echo
 
 BOOTIPWAIT="$(readConfigKey "bootipwait" "${USER_CONFIG_FILE}")"
 [ -z "${BOOTIPWAIT}" ] && BOOTIPWAIT=30
-IPCON=""
 echo -e "\033[1;34mNetwork (${ETHN} NIC)\033[0m"
 RESTARTED=0
 [ ! -f /var/run/dhcpcd/pid ] && /etc/init.d/S41dhcpcd restart >/dev/null 2>&1 && RESTARTED=1
@@ -243,6 +242,7 @@ if [ "${DEVELOPMENT_MODE}" = "true" ]; then
   curl -skL https://github.com/AuxXxilium/arc/archive/refs/heads/dev.zip -o /tmp/arc-dev.zip 2>/dev/null || true
   unzip -q /tmp/arc-dev.zip -d /tmp 2>/dev/null || true
   cp -rf /tmp/arc-dev/files/initrd/opt/arc /opt 2>/dev/null || true
+  rm -rf /tmp/arc-dev /tmp/arc-dev.zip
 fi
 
 # Load Arc Overlay
